@@ -55,7 +55,6 @@ async function main() {
   const minFee = algosdk.ALGORAND_MIN_TX_FEE;
   // example: CONST_MIN_FEE
 
-  // example: TRANSACTION_FEE_OVERRIDE
   const alicesTxnWithDoubleFee = algosdk.makePaymentTxnWithSuggestedParamsFromObject(
     {
       from: alice.addr,
@@ -67,15 +66,14 @@ async function main() {
     }
   );
 
+  // example: TRANSACTION_FEE_OVERRIDE
+  const sp = await client.getTransactionParams().do();
+  sp.fee = 2 * minFee;
+  sp.flatFee = true; // use flatFee to ensure the given fee is used
+  // example: TRANSACTION_FEE_OVERRIDE
+
   const bobsTxnWithZeroFee = algosdk.makePaymentTxnWithSuggestedParamsFromObject(
-    {
-      from: bob.addr,
-      to: alice.addr,
-      amount: 1e6,
-      // set the fee to "minFee * 2" so Bob covers the fee for his transaction AND Alice's transaction
-      // use flatFee to ensure the given fee is used
-      suggestedParams: { ...suggestedParams, fee: minFee * 2, flatFee: true },
-    }
+    { from: bob.addr, to: alice.addr, amount: 1e6, suggestedParams: sp }
   );
 
   const feeTxnArray = [alicesTxnWithDoubleFee, bobsTxnWithZeroFee];
@@ -91,7 +89,6 @@ async function main() {
     alicesTxnWithDoubleFee.txID().toString(),
     3
   );
-  // example: TRANSACTION_FEE_OVERRIDE
 }
 
 main();
