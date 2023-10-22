@@ -268,7 +268,7 @@ export default class AlgodClient extends ServiceClient {
    * [Response data schema details](https://developer.algorand.org/docs/rest-apis/algod/#get-v2transactionspendingtxid)
    *
    * @remarks
-   * <br><br>
+   * <br/><br/>
    * There are several cases when this might succeed:
    * - transaction committed (committed round > 0)
    * - transaction still in the pool (committed round = 0, pool error = "")
