@@ -25,8 +25,9 @@ import {
 } from '../src/main.js';
 import { PQ_PROGRAM_TAG } from '../src/logicsig.js';
 import { concatArrays } from '../src/utils/utils.js';
-import { genericHash } from '../src/nacl/naclWrappers.js';
-import { base64ToBytes } from '../src/encoding/binarydata.js';
+import { base64ToBytes, hexToBytes } from '../src/encoding/binarydata.js';
+import { couldBeCurvePoint } from '../src/utils/ed25519-check.js';
+import lsigAddressKat from './pq_test_data/lsig_address_kat.json';
 
 describe('PQ Address', () => {
   it('derives the sender address of a PQ payment from its public key', () => {
@@ -120,7 +121,7 @@ describe('PQ signers', () => {
     const falconSigningKey: Falcon1024SigningKey = {
       falcon1024PublicKey: base64ToBytes(pqPaymentData.signer.pqSigner.pk),
       falcon1024Signer: async (data: Uint8Array) => {
-        assert.deepEqual(data, new Uint8Array(genericHash(txn.bytesToSign())));
+        assert.deepEqual(data, txn.bytesToSign());
 
         return base64ToBytes(pqPaymentData.stxn.pqsig.sig);
       },
@@ -150,7 +151,7 @@ describe('PQ signers', () => {
         pqRekeyedPaymentData.signer.pqSigner.pk
       ),
       falcon1024Signer: async (data: Uint8Array) => {
-        assert.deepEqual(data, new Uint8Array(genericHash(txn.bytesToSign())));
+        assert.deepEqual(data, txn.bytesToSign());
 
         return base64ToBytes(pqRekeyedPaymentData.stxn.pqsig.sig);
       },
@@ -182,11 +183,7 @@ describe('PQ signers', () => {
         // PQ program tag and the auth address), not over a transaction.
         assert.deepEqual(
           data,
-          new Uint8Array(
-            genericHash(
-              concatArrays(PQ_PROGRAM_TAG, authAddress.publicKey, program)
-            )
-          )
+          concatArrays(PQ_PROGRAM_TAG, authAddress.publicKey, program)
         );
 
         return base64ToBytes(pqDelegatedPaymentData.stxn.lsig.pqsig.sig);
@@ -237,9 +234,7 @@ describe('PQ signers', () => {
         assert.deepEqual(
           data,
           new Uint8Array(
-            genericHash(
-              concatArrays(PQ_PROGRAM_TAG, authAddress.publicKey, program)
-            )
+            concatArrays(PQ_PROGRAM_TAG, authAddress.publicKey, program)
           )
         );
 
@@ -272,5 +267,16 @@ describe('PQ signers', () => {
       blob,
       base64ToBytes(pqRekeyedDelegatedPaymentData.stxnBlob)
     );
+  });
+});
+
+describe('ed25519 couldBeCurvePoint', () => {
+  lsigAddressKat.edwards25519_decode_cases.forEach((testCase) => {
+    it(`${testCase.name}`, () => {
+      assert.strictEqual(
+        couldBeCurvePoint(hexToBytes(testCase.encoding_hex)),
+        testCase.decodes_to_edwards25519_point
+      );
+    });
   });
 });
